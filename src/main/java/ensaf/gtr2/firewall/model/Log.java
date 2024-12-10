@@ -2,6 +2,7 @@ package ensaf.gtr2.firewall.model;
 
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -26,6 +27,6 @@ public class Log {
     private String method;
     private String url;
     private boolean malicious;
-    private LocalDate timestamp;
+    private LocalDateTime timestamp;
     
 }

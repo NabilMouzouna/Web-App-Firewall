@@ -1,6 +1,6 @@
 package ensaf.gtr2.firewall.requestFilter;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,17 +55,18 @@ public class RequestFilterService {
         Log log = new Log();
         log.setMethod(request.getMethod());
         log.setUrl(request.getRequestURI());
-        log.setTimestamp(LocalDate.now());
-
+        LocalDateTime timestamp = LocalDateTime.now();
+        log.setTimestamp(timestamp); // Set current timestamp
+        System.out.println("Timestamp: " + timestamp); // Print timestamp for debugging
+    
         if ("ALLOW".equals(rule.getAction())) {
             log.setMalicious(false);
         } else {
             log.setMalicious(true);
         }
-
-        // Save log for every decision, whether blocked or allowed
-        logRepo.save(log);
-
+        System.out.println(log);
+        logRepo.save(log); // Save to DB
+    
         return !"BLOCK".equals(rule.getAction());
     }
 }

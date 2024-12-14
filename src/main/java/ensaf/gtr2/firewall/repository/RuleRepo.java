@@ -5,7 +5,6 @@ import org.springframework.stereotype.Repository;
 import ensaf.gtr2.firewall.model.Rule;
 
 @Repository
-public interface RuleRepo extends JpaRepository<Rule,Long> {
-
-    
+public interface RuleRepo extends JpaRepository<Rule, Long> {
+    boolean existsByTypeAndValueAndAction(String type, String value, String action);
 }

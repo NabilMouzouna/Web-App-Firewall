@@ -49,10 +49,14 @@ public class RuleController {
     }
 
     @PostMapping
-    public ResponseEntity<Rule> addRule(@RequestBody Rule Rule) {
-        Rule RuleObj = ruleRepo.save(Rule);
-        return new ResponseEntity<>(RuleObj, HttpStatus.CREATED);
+public ResponseEntity<Rule> addRule(@RequestBody Rule rule) {
+    boolean exists = ruleRepo.existsByTypeAndValueAndAction(rule.getType(), rule.getValue(), rule.getAction());
+    if (exists) {
+        return new ResponseEntity<>(HttpStatus.CONFLICT); // 409 Conflict
     }
+    Rule savedRule = ruleRepo.save(rule);
+    return new ResponseEntity<>(savedRule, HttpStatus.CREATED);
+}
 
     @DeleteMapping("/{id}")
     public ResponseEntity<HttpStatus> deleteRuleById(@PathVariable Long id) {

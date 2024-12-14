@@ -8,6 +8,6 @@ public class CatchAllController {
 
     @RequestMapping("/**")
     public String fallback() {
-        return "This is a fallback route.";
+        return "Welcome Back ! 🤍";
     }
 }

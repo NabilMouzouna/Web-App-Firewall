@@ -16,15 +16,8 @@ public class TestController {
         return "This is an allowed path.";
     }
 
-    @GetMapping("/blocked-path")
-    public String blockedPath() {
-        return "This path should be blocked.";
-        // Implement proper logic for blocking here, possibly with a firewall filter
-    }
-
-    @PostMapping("/sql-injection")
+    @PostMapping("/test/user")
     public String sqlInjection(@RequestBody User user) {
-        // Potentially block or sanitize input here to prevent issues
         return "This username: " + user.getUsername() + " should not be visible because access to this route is denied";
     }
 }

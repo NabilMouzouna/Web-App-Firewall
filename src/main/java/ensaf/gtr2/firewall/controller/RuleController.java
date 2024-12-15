@@ -52,7 +52,7 @@ public class RuleController {
 public ResponseEntity<Rule> addRule(@RequestBody Rule rule) {
     boolean exists = ruleRepo.existsByTypeAndValueAndAction(rule.getType(), rule.getValue(), rule.getAction());
     if (exists) {
-        return new ResponseEntity<>(HttpStatus.CONFLICT); // 409 Conflict
+        return new ResponseEntity<>(HttpStatus.CONFLICT);
     }
     Rule savedRule = ruleRepo.save(rule);
     return new ResponseEntity<>(savedRule, HttpStatus.CREATED);

@@ -16,7 +16,10 @@ import ensaf.gtr2.firewall.model.Rule;
 import ensaf.gtr2.firewall.repository.LogRepo;
 import ensaf.gtr2.firewall.repository.RuleRepo;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -37,56 +40,71 @@ public class HttpRequestFiltering implements Filter {
             throws IOException, ServletException {
         HttpServletRequest httpRequest = (HttpServletRequest) request;
         HttpServletResponse httpResponse = (HttpServletResponse) response;
-    
+
         String uri = httpRequest.getRequestURI();
         String method = httpRequest.getMethod();
         Log newLog = new Log();
-    
+
         // Log the request details
         System.out.println("Incoming request: " + method + " " + uri);
         newLog.setMethod(method);
         newLog.setTimestamp(LocalDateTime.now());
         newLog.setUrl(uri);
-    
+
         // Fetch all rules from the database
         List<Rule> rules = ruleRepo.findAll();
-    
-        // Debug: Print out all rules
-        System.out.println("Total Rules Found: " + rules.size());
-        rules.forEach(rule -> {
-            System.out.println("Rule Details - Type: '" + rule.getType() + 
-                               "', Action: '" + rule.getAction() + 
-                               "', Value: '" + rule.getValue() + "'");
+
+        // Check if the request matches any blocked rule
+        boolean isBlocked = rules.stream().anyMatch(rule -> {
+            if ("BLOCKED".equalsIgnoreCase(rule.getAction())) {
+                // Handle "ROUTE" type rules
+                if ("ROUTE".equalsIgnoreCase(rule.getType())) {
+                    return uri.equals(rule.getValue());
+                }
+                // Handle "REQUEST-BODY" type rules
+                else if ("REQUEST-BODY".equalsIgnoreCase(rule.getType())) {
+                    return isBodyBlocked(httpRequest, rule);
+                }
+            }
+            return false;
         });
-    
-        // Check if the request matches any blocked route
-        boolean isBlocked = rules.stream()
-            .filter(rule -> "ROUTE".equalsIgnoreCase(rule.getType()))
-            .anyMatch(rule -> {
-                boolean typeMatch = "ROUTE".equalsIgnoreCase(rule.getType());
-                boolean actionMatch = rule.getAction() != null && 
-                                      ("BLOCKED".equalsIgnoreCase(rule.getAction()));
-                boolean valueMatch = uri.equals(rule.getValue());
-                
-                System.out.println("Checking Rule - Type Match: " + typeMatch + 
-                                   ", Action Match: " + actionMatch + 
-                                   ", Value Match: " + valueMatch);
-                
-                return typeMatch && actionMatch && valueMatch;
-            });
-    
+
+        // Block the request if any rule matches
         if (isBlocked) {
             System.out.println("Access to " + uri + " is blocked by rule.");
-            httpResponse.sendError(HttpServletResponse.SC_FORBIDDEN, "Access Denied: This route is blocked.");
+            httpResponse.sendError(HttpServletResponse.SC_FORBIDDEN, "Access Denied: This request is blocked.");
             newLog.setMalicious(true);
             logRepo.save(newLog);
             return;
         }
-    
+
         // If not blocked, save as non-malicious log and continue
         newLog.setMalicious(false);
         logRepo.save(newLog);
-    
+
         chain.doFilter(request, response);
+    }
+
+    /**
+     * Check if the request body matches the blocked rule value.
+     *
+     * @param httpRequest the incoming HTTP request
+     * @param rule        the blocking rule
+     * @return true if the body contains the blocked value, false otherwise
+     */
+    private boolean isBodyBlocked(HttpServletRequest httpRequest, Rule rule) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(httpRequest.getInputStream(), StandardCharsets.UTF_8))) {
+            StringBuilder requestBody = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                requestBody.append(line).append("\n");
+            }
+            // Check if the request body contains the blocked value
+            return requestBody.toString().contains(rule.getValue());
+        } catch (IOException e) {
+            // Log the exception
+            System.err.println("Error reading the request body: " + e.getMessage());
+            return false; // Return false if there's an error
+        }
     }
 }

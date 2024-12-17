@@ -56,11 +56,3 @@ CREATE DATABASE firewall;
 |-------------|------------------|------------------------------------|
 | `GET`       | `/api/logs`      | Fetch all logs                    |
 
----
-
-## **Example Test**
-
-### **SQL Injection Block**
-1. Add a rule to block SQL Injection in the database:
-   ```sql
-   INSERT INTO rules (type, action, value) VALUES ('REQUEST-BODY', 'BLOCK', 'DROP TABLE');
